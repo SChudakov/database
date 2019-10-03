@@ -1,0 +1,119 @@
+{% extends "layout.html" %}
+
+{% block content %}
+
+<div class="content-section">
+    <form method="POST" action="">
+        {{ create_row_form.hidden_tag() }}
+        <fieldset class="form-group">
+            <div class="form-group">
+                {{ create_row_form.row_data1.label(class="form-control-label") }}
+
+                {% if create_row_form.row_data1.errors %}
+                {{ create_row_form.row_data1(class="form-control form-control-lg is-invalid") }}
+                <div class="invalid-feedback">
+                    {% for error in create_row_form.row_data1.errors %}
+                    <span>{{ error }}</span>
+                    {% endfor %}
+                </div>
+                {% else %}
+                {{ create_row_form.row_data1(class="form-control form-control-lg") }}
+                {% endif %}
+            </div>
+        </fieldset>
+        <div class="form-group">
+            {{ create_row_form.create_row(class="btn btn-outline-info") }}
+        </div>
+    </form>
+</div>
+
+<div class="content-section">
+    <form method="POST" action="">
+        {{ update_row_form.hidden_tag() }}
+        <fieldset class="form-group">
+            <div class="form-group">
+                {{ update_row_form.row_id1.label(class="form-control-label") }}
+
+                {% if update_row_form.row_id1.errors %}
+                {{ update_row_form.row_id1(class="form-control form-control-lg is-invalid") }}
+                <div class="invalid-feedback">
+                    {% for error in update_row_form.row_id1.errors %}
+                    <span>{{ error }}</span>
+                    {% endfor %}
+                </div>
+                {% else %}
+                {{ update_row_form.row_id1(class="form-control form-control-lg") }}
+                {% endif %}
+            </div>
+            <div class="form-group">
+                {{ update_row_form.row_data2.label(class="form-control-label") }}
+
+                {% if update_row_form.row_data2.errors %}
+                {{ update_row_form.row_data2(class="form-control form-control-lg is-invalid") }}
+                <div class="invalid-feedback">
+                    {% for error in update_row_form.row_data2.errors %}
+                    <span>{{ error }}</span>
+                    {% endfor %}
+                </div>
+                {% else %}
+                {{ update_row_form.row_data2(class="form-control form-control-lg") }}
+                {% endif %}
+            </div>
+        </fieldset>
+        <div class="form-group">
+            {{ update_row_form.update_row(class="btn btn-outline-info") }}
+        </div>
+    </form>
+</div>
+
+<div class="content-section">
+    <form method="POST" action="">
+        {{ delete_row_form.hidden_tag() }}
+        <fieldset class="form-group">
+            <div class="form-group">
+                {{ delete_row_form.row_id2.label(class="form-control-label") }}
+
+                {% if delete_row_form.row_id2.errors %}
+                {{ delete_row_form.row_id2(class="form-control form-control-lg is-invalid") }}
+                <div class="invalid-feedback">
+                    {% for error in delete_row_form.row_id2.errors %}
+                    <span>{{ error }}</span>
+                    {% endfor %}
+                </div>
+                {% else %}
+                {{ delete_row_form.row_id2(class="form-control form-control-lg") }}
+                {% endif %}
+            </div>
+        </fieldset>
+        <div class="form-group">
+            {{ delete_row_form.delete_row(class="btn btn-outline-info") }}
+        </div>
+    </form>
+</div>
+
+<div class="container">
+    <table class="table">
+        <thead>
+        <tr>
+            <th scope="col">id</th>
+            {% for column_name in table.columns_names %}
+            <th scope="col">{{ column_name }}</th>
+            {% endfor %}
+        </tr>
+        </thead>
+
+        <tbody>
+
+        {% for row in rows %}
+        <tr>
+            <th scope="row">{{ row.id }}</th>
+            {% for datum in row.data %}
+            <td>{{ datum }}</td>
+            {% endfor %}
+        </tr>
+        {% endfor %}
+
+        </tbody>
+    </table>
+</div>
+{% endblock content %}
