@@ -96,8 +96,8 @@
         <thead>
         <tr>
             <th scope="col">id</th>
-            {% for column_name in table.columns_names %}
-            <th scope="col">{{ column_name }}</th>
+            {% for i in range(table.columns_names|length) %}
+            <th scope="col">{{ table.columns_names[i] }}:{{ table.columns_types.types_to_names[table.columns_types.types_list[i]] }}</th>
             {% endfor %}
         </tr>
         </thead>

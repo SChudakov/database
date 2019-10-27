@@ -135,7 +135,7 @@ ColumnsNames = List[str]
 ColumnsTypesList = List[Type[Union[int, float, str, Char, Color, ColorInterval, Time, TimeInterval]]]
 
 
-class ColumnsTypes:
+class ColumnTypes:
     names_to_types = {
         'int': int,
         'real': float,
@@ -160,20 +160,20 @@ class ColumnsTypes:
 
     def __init__(self, types_list: ColumnsTypesList) -> None:
         for t in types_list:
-            if t not in ColumnsTypes.types_to_names:
+            if t not in ColumnTypes.types_to_names:
                 raise ValueError('{} type is not supported'.format(t))
         self.types_list = types_list
 
     def to_json(self) -> ColumnsTypesStr:
-        return list(map(lambda x: ColumnsTypes.types_to_names[x], self.types_list))
+        return list(map(lambda x: ColumnTypes.types_to_names[x], self.types_list))
 
     @classmethod
     def from_json(cls, json_obj: ColumnsTypesStr):
         mapped_types = list()
         for type_str in json_obj:
-            if type_str not in ColumnsTypes.names_to_types:
+            if type_str not in ColumnTypes.names_to_types:
                 raise ValueError(f'Unknown type {type_str}')
-            mapped_types.append(ColumnsTypes.names_to_types[type_str])
+            mapped_types.append(ColumnTypes.names_to_types[type_str])
         return cls(mapped_types)
 
     def convert(self, row: RowDataStr) -> RowData:
@@ -186,11 +186,19 @@ class ColumnsTypes:
 
         return result
 
+    def verify(self, row: RowData) -> RowData:
+        if not len(row) == len(self.types_list):
+            raise ValueError('Length of row {} does not match number of columns in the table'.format(row))
+
+        for i in range(len(row)):
+            if not type(row[i]) == self.types_list[i]:
+                raise ValueError(f'element {i} in row has invalid type {type(row[i])}; expected: {self.types_list[i]}')
+
     def convert_column(self, column_index: int, value: str):
         return self.types_list[column_index](value)
 
     def __eq__(self, o: object) -> bool:
-        if isinstance(o, ColumnsTypes):
+        if isinstance(o, ColumnTypes):
             return self.types_list == o.types_list
         return False
 
@@ -215,7 +223,7 @@ class TableRow:
         return result
 
     @classmethod
-    def from_json(cls, json_obj: dict, table_header: ColumnsTypes):
+    def from_json(cls, json_obj: dict, table_header: ColumnTypes):
         return cls(int(json_obj[TableRow.id_field]), table_header.convert(json_obj[TableRow.data_field]))
 
     def __eq__(self, o: object) -> bool:
@@ -235,18 +243,27 @@ class Table:
     _rows_field = 'rows'
 
     def __init__(self, name: str, columns_names: ColumnsNames,
-                 column_types: ColumnsTypes, id_counter: int = 0) -> None:
+                 column_types: ColumnTypes, id_counter: int = 0) -> None:
         self.name = name
         self.columns_names = columns_names
         self.columns_types = column_types
         self.id_counter = id_counter
         self.rows = list()
 
+    def __eq__(self, o: object) -> bool:
+        if isinstance(o, Table):
+            return self.name == o.name and self.columns_names == o.columns_names \
+                   and self.columns_types == o.columns_types and self.rows == o.rows
+        return False
+
+    def __str__(self) -> str:
+        return json.dumps(self.to_json(), indent=4)
+
     def append_row_sql(self, sql: str):
-        self.append_row_str(sql.split())
+        self.append_row_str(sql.split(','))
 
     def update_row_sql(self, id: int, sql: str):
-        columns_names, values = Table._parse_row_sql(sql)
+        columns_names, column_values = Table._parse_row_sql(sql)
         if id not in [row.id for row in self.rows]:
             raise ValueError(f'No row with id {id}')
 
@@ -255,18 +272,25 @@ class Table:
             if row.id == id:
                 updated_row = row
 
-        for columns_name in columns_names:
+        for i in range(len(columns_names)):
+            columns_name = columns_names[i]
+            column_value = column_values[i]
             if columns_name not in self.columns_names:
                 raise ValueError(f'No column with name {columns_name} in table {self.name}')
             column_index = self.columns_names.index(columns_name)
-
-            updated_row.data[column_index] = self.columns_types.convert_column(column_index, values[column_index])
+            updated_row.data[column_index] = self.columns_types.convert_column(column_index, column_value)
 
     def delete_row(self, id: int):
         ids = [row.id for row in self.rows]
         if id not in ids:
             raise ValueError(f'No row with id {id} in table {self.name}')
         del self.rows[ids.index(id)]
+
+    def get_row(self, id: int):
+        ids = [row.id for row in self.rows]
+        if id not in ids:
+            raise ValueError(f'No row with id {id} in table {self.name}')
+        return self.rows[ids.index(id)]
 
     @staticmethod
     def _parse_row_sql(sql: str) -> Tuple[List[str], List[str]]:
@@ -275,7 +299,7 @@ class Table:
         names = list()
         values = list()
         for column_info in split_info:
-            column_and_value = column_info.split()
+            column_and_value = column_info.split(':')
             if not len(column_and_value) == 2:
                 raise ValueError(f'Invalid format of column-value entry: {column_info}')
 
@@ -289,6 +313,7 @@ class Table:
         self.append_row(converted)
 
     def append_row(self, row: RowData):
+        self.columns_types.verify(row)
         table_row = TableRow(self.id_counter, row)
         self._append_row_obj(table_row)
         self.id_counter += 1
@@ -308,7 +333,7 @@ class Table:
 
     @classmethod
     def from_json(cls, json_obj: dict):
-        table_header = ColumnsTypes.from_json(json_obj[Table._rows_field])
+        table_header = ColumnTypes.from_json(json_obj[Table._columns_types_field])
         result = cls(json_obj[Table._name_field], json_obj[Table._columns_names_field], table_header)
         id_counter = 0
         for row_json in json_obj[Table._rows_field]:
@@ -316,7 +341,7 @@ class Table:
             result._append_row_obj(table_row)
             id_counter = max(id_counter, table_row.id)
 
-        result.id_counter = id_counter
+        result.id_counter = id_counter + 1
         return result
 
     @classmethod
@@ -325,7 +350,7 @@ class Table:
         return Table(name, names, types)
 
     @staticmethod
-    def _parse_sql(sql: str) -> Tuple[List[str], ColumnsTypes]:
+    def _parse_sql(sql: str) -> Tuple[List[str], ColumnTypes]:
         split_info = sql.split(',')
 
         names = list()
@@ -342,7 +367,7 @@ class Table:
             names.append(name_and_type[0])
             types.append(name_and_type[1])
 
-        return names, ColumnsTypes.from_json(types)
+        return names, ColumnTypes.from_json(types)
 
     def join(self, other_table, column_name: str, new_name: str = None):
         if column_name not in self.columns_names:
@@ -363,7 +388,7 @@ class Table:
         result_columns_types_list.extend(other_table.columns_types.types_list[:other_column_index])
         result_columns_types_list.extend(other_table.columns_types.types_list[other_column_index + 1:])
 
-        result = Table(result_name, result_columns_names, ColumnsTypes(result_columns_types_list))
+        result = Table(result_name, result_columns_names, ColumnTypes(result_columns_types_list))
 
         for row in self.rows:
             for other_row in other_table.rows:
@@ -374,41 +399,51 @@ class Table:
 
         return result
 
-    def __eq__(self, o: object) -> bool:
-        if isinstance(o, Table):
-            return self.name == o.name and self.columns_names == o.columns_names \
-                   and self.columns_types == o.columns_types and self.rows == o.rows
-        return False
-
-    def __str__(self) -> str:
-        return json.dumps(self.to_json(), indent=4)
-
 
 class Database:
-    name_filed = 'name'
-    tables_filed = 'tables'
+    name_field = 'name'
+    tables_field = 'tables'
 
     def __init__(self, name: str) -> None:
         pathvalidate.validate_filename(name)
         self.name = name
-        self.tables = dict()
+        self._tables = dict()
+
+    def get_tables_names(self):
+        return list(self._tables.keys())
+
+    def get_table(self, table_name: str):
+        if table_name not in self._tables:
+            raise ValueError(f'Table with name {table_name} does not exist')
+        return self._tables[table_name]
 
     def add_table(self, table: Table) -> None:
-        if table.name in self.tables:
+        if table.name in self._tables:
             raise ValueError('Table with name {} already exists in database'.format(table.name))
-        self.tables[table.name] = table
+        self._tables[table.name] = table
 
     def drop_table(self, name: str) -> None:
-        if name not in self.tables:
+        if name not in self._tables:
             raise ValueError('Table with name {} does not exists in the database'.format(name))
-        del self.tables[name]
+        del self._tables[name]
 
-    def persist(self, path: str) -> None:
-        assert_exists(path)
-        assert_is_file(path)
+    def to_json(self) -> dict:
+        tables = dict()
+        for name, table in self._tables.items():
+            tables[name] = table.to_json()
 
-        with open(path, 'w') as write_stream:
-            json.dump(self.to_json(), write_stream)
+        result = dict()
+        result[Database.name_field] = self.name
+        result[Database.tables_field] = tables
+
+        return result
+
+    @classmethod
+    def from_json(cls, json_obj):
+        result = cls(json_obj[Database.name_field])
+        for name, table_json in json_obj[Database.tables_field].items():
+            result._tables[name] = Table.from_json(table_json)
+        return result
 
     @staticmethod
     def load(path: str):
@@ -420,50 +455,51 @@ class Database:
 
             return Database.from_json(json_obj)
 
-    def to_json(self) -> dict:
-        tables = dict()
-        for name, table in self.tables.items():
-            tables[name] = table.to_json()
+    def persist(self, path: str) -> None:
+        if os.path.isdir(path):
+            raise ValueError(f'Path {path} points to directory')
 
-        result = dict()
-        result[Database.name_filed] = self.name
-        result[Database.tables_filed] = tables
-
-        return result
-
-    @classmethod
-    def from_json(cls, json_obj):
-        result = cls(json_obj[Database.name_filed])
-        for name, table_json in json_obj[Database.tables_filed].items():
-            result.tables[name] = Table.from_json(table_json)
-        return result
+        with open(path, 'w') as write_stream:
+            json.dump(self.to_json(), write_stream, indent=4)
 
     def __eq__(self, o: object) -> bool:
         if isinstance(o, Database):
-            return self.name == o.name and self.tables_filed == o.tables_filed
+            return self.name == o.name and self.tables_field == o.tables_field
         return False
 
 
 class DBMS:
-    _default_data_location = '/var/lib/Xdatabse'
+    _default_data_location = '/home/semen/lib/Xdatabse'
 
     def __init__(self, path: str = _default_data_location) -> None:
         pathvalidate.validate_filepath(path)
-        self.path = path
-        self.databases = dict()
+        if not os.path.exists(path):
+            os.mkdir(path)
+        self._path = path
+        self._databases = dict()
 
-    def create_database(self, name: str) -> None:
-        if name in self.databases:
+    def create_database(self, name: str):
+        if name in self._databases:
             raise ValueError('Database with name {} already exits'.format(name))
-        self.databases[name] = Database(name)
+        result = Database(name)
+        self._databases[name] = result
+        return result
+
+    def get_database(self, name: str) -> Database:
+        if name not in self._databases:
+            raise ValueError('Database with name {} does not exist'.format(name))
+        return self._databases[name]
 
     def delete_database(self, name: str) -> None:
-        if name not in self.databases:
+        if name not in self._databases:
             raise ValueError('Database with name {} does not exist'.format(name))
-        del self.databases[name]
+        del self._databases[name]
+
+    def get_databases_names(self):
+        return list(self._databases.keys())
 
     @staticmethod
-    def load(path: str):
+    def load(path: str = _default_data_location):
         assert_exists(path)
         assert_is_dir(path)
 
@@ -471,12 +507,12 @@ class DBMS:
         for file_name in os.listdir(path):
             abs_path = os.path.join(path, file_name)
             if os.path.isfile(abs_path):
-                result.databases[file_name] = Database.load(abs_path)
+                result._databases[file_name] = Database.load(abs_path)
 
         return result
 
     def persist(self) -> None:
-        shutil.rmtree(self.path, ignore_errors=True)
-        os.mkdir(self.path)
-        for database_name, database in self.databases.items():
-            database.persist(os.path.join(self.path, database_name))
+        shutil.rmtree(self._path, ignore_errors=True)
+        os.mkdir(self._path)
+        for database_name, database in self._databases.items():
+            database.persist(os.path.join(self._path, database_name))

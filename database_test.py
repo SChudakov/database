@@ -1,8 +1,9 @@
+import json
 import unittest
 
 from pathvalidate import ValidationError
 
-from database import Char, TimeInterval, Color, ColorInterval, Time, ColumnsTypes, Table, TableRow, Database, DBMS
+from database import Char, TimeInterval, Color, ColorInterval, Time, ColumnTypes, Table, TableRow, Database, DBMS
 
 
 class CharTest(unittest.TestCase):
@@ -114,35 +115,35 @@ class TimeIntervalTest(unittest.TestCase):
 class ColumnsTypesTest(unittest.TestCase):
 
     def test_init(self):
-        ColumnsTypes([])
-        ColumnsTypes([int, int, int])
-        ColumnsTypes([int, float, Char])
-        self.assertRaises(ValueError, ColumnsTypes, [dict])
-        self.assertRaises(ValueError, ColumnsTypes, [set])
+        ColumnTypes([])
+        ColumnTypes([int, int, int])
+        ColumnTypes([int, float, Char])
+        self.assertRaises(ValueError, ColumnTypes, [dict])
+        self.assertRaises(ValueError, ColumnTypes, [set])
 
     def test_to_json(self):
-        self.assertEqual(ColumnsTypes([]).to_json(), [])
-        self.assertEqual(ColumnsTypes([int, float, str, Char,
-                                       Color, ColorInterval, Time, TimeInterval]).to_json(),
+        self.assertEqual(ColumnTypes([]).to_json(), [])
+        self.assertEqual(ColumnTypes([int, float, str, Char,
+                                      Color, ColorInterval, Time, TimeInterval]).to_json(),
                          ['int', 'real', 'str', 'char', 'color', 'colorinvl', 'time', 'timeinvl'])
 
     def test_from_json(self):
-        self.assertEqual(ColumnsTypes.from_json([]), ColumnsTypes([]))
+        self.assertEqual(ColumnTypes.from_json([]), ColumnTypes([]))
         self.assertEqual(
-            ColumnsTypes.from_json(['int', 'real', 'str', 'char', 'color', 'colorinvl', 'time', 'timeinvl']),
-            ColumnsTypes([int, float, str, Char, Color, ColorInterval, Time, TimeInterval]))
+            ColumnTypes.from_json(['int', 'real', 'str', 'char', 'color', 'colorinvl', 'time', 'timeinvl']),
+            ColumnTypes([int, float, str, Char, Color, ColorInterval, Time, TimeInterval]))
 
     def test_convert(self):
         pass
 
     def test_eq(self):
-        self.assertEqual(ColumnsTypes([int, float, str, Char, Color, ColorInterval, Time, TimeInterval]),
-                         ColumnsTypes([int, float, str, Char, Color, ColorInterval, Time, TimeInterval]))
-        self.assertNotEqual(ColumnsTypes([]),
-                            ColumnsTypes([int, float, str, Char, Color, ColorInterval, Time, TimeInterval]))
+        self.assertEqual(ColumnTypes([int, float, str, Char, Color, ColorInterval, Time, TimeInterval]),
+                         ColumnTypes([int, float, str, Char, Color, ColorInterval, Time, TimeInterval]))
+        self.assertNotEqual(ColumnTypes([]),
+                            ColumnTypes([int, float, str, Char, Color, ColorInterval, Time, TimeInterval]))
 
     def test_str(self):
-        self.assertEqual(str(ColumnsTypes([int, float, str, Char, Color, ColorInterval, Time, TimeInterval])),
+        self.assertEqual(str(ColumnTypes([int, float, str, Char, Color, ColorInterval, Time, TimeInterval])),
                          '''[
     "int",
     "real",
@@ -158,11 +159,11 @@ class ColumnsTypesTest(unittest.TestCase):
 class TableTest(unittest.TestCase):
 
     def test_join(self):
-        table1 = Table('table1', ['c1', 'c2'], ColumnsTypes([int, int]))
+        table1 = Table('table1', ['c1', 'c2'], ColumnTypes([int, int]))
         table1.append_row([1, 2])
         table1.append_row([1, 4])
         table1.append_row([2, 3])
-        table2 = Table('table2', ['c1', 'c3'], ColumnsTypes([int, str]))
+        table2 = Table('table2', ['c1', 'c3'], ColumnTypes([int, str]))
         table2.append_row([1, 'str1'])
         table2.append_row([2, 'str2'])
 
@@ -184,7 +185,7 @@ class TableRowTest(unittest.TestCase):
         self.assertEqual({'id': 1, 'data': []}, TableRow(1, []).to_json())
 
     def test_from_json(self):
-        self.assertEqual(TableRow(1, []), TableRow.from_json({'id': 1, 'data': []}, ColumnsTypes([])))
+        self.assertEqual(TableRow(1, []), TableRow.from_json({'id': 1, 'data': []}, ColumnTypes([])))
 
     def test_eq(self):
         self.assertEqual(TableRow(0, []), TableRow(0, []))
@@ -214,14 +215,14 @@ class DatabaseTest(unittest.TestCase):
         self.assertRaises(ValidationError, Database, 'n>')
 
     def test_to_json(self):
-        table = Table('table', ['column'], ColumnsTypes([str]))
+        table = Table('table', ['column'], ColumnTypes([str]))
         database = Database('database')
         database.add_table(table)
 
         self.assertEqual({'name': 'database', 'tables': {'table': table.to_json()}}, database.to_json())
 
     def test_from_json(self):
-        table = Table('table', ['column'], ColumnsTypes([str]))
+        table = Table('table', ['column'], ColumnTypes([str]))
         database = Database('database')
         database.add_table(table)
 
@@ -232,6 +233,35 @@ class DBMSTest(unittest.TestCase):
     def test_init(self):
         DBMS('/var/lib/Xdatabse')
         self.assertRaises(ValidationError, DBMS, '/var/lib/Xdatabse??')
+
+    def test_persist(self):
+        dbms: DBMS = DBMS()
+
+        db1: Database = dbms.create_database('db1')
+        table1 = Table('table1', ['c1', 'c2'], ColumnTypes([int, str]))
+        table1.append_row([1, '1'])
+        table1.append_row([2, '2'])
+        table2 = Table('table2', ['c1', 'c2'], ColumnTypes([str, int]))
+        table2.append_row(['1', 1])
+        table2.append_row(['2', 2])
+        db1.add_table(table1)
+        db1.add_table(table2)
+
+        db2: Database = dbms.create_database('db2')
+        table3 = Table('table3', ['c1', 'c2'], ColumnTypes([Char, Color]))
+        table3.append_row([Char('a'), Color('#ffffff')])
+        table3.append_row([Char('b'), Color('#aaaaaa')])
+        table4 = Table('table4', ['c1', 'c2'], ColumnTypes([Color, Char]))
+        table4.append_row([Color('#ffffff'), Char('a')])
+        table4.append_row([Color('#ffffff'), Char('a')])
+        db2.add_table(table3)
+        db2.add_table(table4)
+
+        dbms.persist()
+        DBMS.load()
+        for database_name in dbms.get_databases_names():
+            for table_name, table in dbms.get_database(database_name)._tables.items():
+                print(table.to_json())
 
 
 if __name__ == '__main__':
