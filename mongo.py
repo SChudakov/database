@@ -1,4 +1,3 @@
-import traceback
 from pymongo import MongoClient
 
 from flask import Flask, request, jsonify, json
@@ -95,7 +94,6 @@ class DocumentResource(Resource):
                                                  {"$set": json.loads(request.args.get('update'))})
             return {'message': 'Document updated successfully'}
         except Exception as e:
-            traceback.print_exc()
             raise InvalidUsage(str(e), 400)
 
 
@@ -121,11 +119,11 @@ def handle_invalid_usage(error):
     return response
 
 
-api.add_resource(DatabaseResource, '/rest/database')
-api.add_resource(DatabaseNameResource, '/rest/database/<database_name>')
-api.add_resource(CollectionResource, '/rest/database/<database_name>/collection')
-api.add_resource(CollectionNameResource, '/rest/database/<database_name>/collection/<collection_name>')
-api.add_resource(DocumentResource, '/rest/database/<database_name>/collection/<collection_name>/document')
+api.add_resource(DatabaseResource, '/mongo/database')
+api.add_resource(DatabaseNameResource, '/mongo/database/<database_name>')
+api.add_resource(CollectionResource, '/mongo/database/<database_name>/collection')
+api.add_resource(CollectionNameResource, '/mongo/database/<database_name>/collection/<collection_name>')
+api.add_resource(DocumentResource, '/mongo/database/<database_name>/collection/<collection_name>/document')
 
 if __name__ == '__main__':
     app.run(debug=True)

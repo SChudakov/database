@@ -1,5 +1,3 @@
-import traceback
-
 from flask import Flask, render_template, request, flash, url_for, redirect, jsonify, json
 from flask_restful import Resource, Api
 
@@ -113,7 +111,6 @@ class RowResource(Resource):
                                                                                    request.args.get('row_data'))
             return {'message': 'Table row updated successfully'}
         except Exception as e:
-            traceback.print_exc()
             raise InvalidUsage(str(e), 400)
 
 
@@ -139,12 +136,12 @@ def handle_invalid_usage(error):
     return response
 
 
-api.add_resource(SaveResource, '/rest/save')
-api.add_resource(DatabaseResource, '/rest/database')
-api.add_resource(DatabaseNameResource, '/rest/database/<database_name>')
-api.add_resource(TableResource, '/rest/database/<database_name>/table')
-api.add_resource(TableNameResource, '/rest/database/<database_name>/table/<table_name>')
-api.add_resource(RowResource, '/rest/database/<database_name>/table/<table_name>/row')
+api.add_resource(SaveResource, '/mysql/save')
+api.add_resource(DatabaseResource, '/mysql/database')
+api.add_resource(DatabaseNameResource, '/mysql/database/<database_name>')
+api.add_resource(TableResource, '/mysql/database/<database_name>/table')
+api.add_resource(TableNameResource, '/mysql/database/<database_name>/table/<table_name>')
+api.add_resource(RowResource, '/mysql/database/<database_name>/table/<table_name>/row')
 
 if __name__ == '__main__':
     app.run(debug=True)
