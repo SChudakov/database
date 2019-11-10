@@ -2,8 +2,6 @@ from flask import Flask, render_template, request, flash, url_for, redirect, jso
 from flask_restful import Resource, Api
 
 from database import DBMS, Table, ColumnTypes
-from forms import CreateDatabaseForm, EditDatabaseForm, EditTableForm, CreateTableForm, JoinTablesForm, CreateRowForm, \
-    UpdateRowForm, DeleteRowForm
 
 app = Flask(__name__)
 api = Api(app)
