@@ -1,9 +1,8 @@
-import traceback
 
 from flask import Flask, render_template, request, flash, url_for, redirect, jsonify, json
-from flask_restful import Resource, Api
+from flask_restful import Api
 
-from database import DBMS, Table, ColumnTypes
+from database import DBMS, Table
 from forms import CreateDatabaseForm, EditDatabaseForm, EditTableForm, CreateTableForm, JoinTablesForm, CreateRowForm, \
     UpdateRowForm, DeleteRowForm
 

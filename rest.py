@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, flash, url_for, redirect, jsonify, json
+from flask import Flask, request, jsonify, json
 from flask_restful import Resource, Api
 
 from database import DBMS, Table, ColumnTypes
