@@ -236,11 +236,11 @@ class TableRow:
 
 
 class Table:
-    _name_field = 'name'
-    _columns_names_field = 'column_names'
-    _columns_types_field = 'columns_types'
-    _id_counter_types_field = 'id_counter'
-    _rows_field = 'rows'
+    name_field = 'name'
+    columns_names_field = 'column_names'
+    columns_types_field = 'columns_types'
+    id_counter_field = 'id_counter'
+    rows_field = 'rows'
 
     def __init__(self, name: str, columns_names: ColumnsNames,
                  column_types: ColumnTypes, id_counter: int = 0) -> None:
@@ -323,20 +323,20 @@ class Table:
 
     def to_json(self) -> dict:
         result = dict()
-        result[Table._name_field] = self.name
-        result[Table._columns_names_field] = self.columns_names
-        result[Table._columns_types_field] = self.columns_types.to_json()
+        result[Table.name_field] = self.name
+        result[Table.columns_names_field] = self.columns_names
+        result[Table.columns_types_field] = self.columns_types.to_json()
 
-        result[Table._rows_field] = list(map(lambda x: x.to_json(), self.rows))
+        result[Table.rows_field] = list(map(lambda x: x.to_json(), self.rows))
 
         return result
 
     @classmethod
     def from_json(cls, json_obj: dict):
-        table_header = ColumnTypes.from_json(json_obj[Table._columns_types_field])
-        result = cls(json_obj[Table._name_field], json_obj[Table._columns_names_field], table_header)
+        table_header = ColumnTypes.from_json(json_obj[Table.columns_types_field])
+        result = cls(json_obj[Table.name_field], json_obj[Table.columns_names_field], table_header)
         id_counter = 0
-        for row_json in json_obj[Table._rows_field]:
+        for row_json in json_obj[Table.rows_field]:
             table_row = TableRow.from_json(row_json, table_header)
             result._append_row_obj(table_row)
             id_counter = max(id_counter, table_row.id)
@@ -412,7 +412,7 @@ class Database:
     def get_tables_names(self):
         return list(self._tables.keys())
 
-    def get_table(self, table_name: str):
+    def get_table(self, table_name: str) -> Table:
         if table_name not in self._tables:
             raise ValueError(f'Table with name {table_name} does not exist')
         return self._tables[table_name]

@@ -37,30 +37,23 @@ _dbms = DBMS.load()
 def index():
     edit_database_form = EditDatabaseForm()
     create_database_form = CreateDatabaseForm()
-    print('{} {} {} {}'.format(request.method, edit_database_form.is_submitted(), create_database_form.is_submitted(),
-                               request.form))
 
     try:
         if request.method == 'POST':
             if _edit_database_button in request.form:
-                print('edit database')
                 return redirect(url_for('database', database_name=edit_database_form.database_name.data))
             elif _delete_database_button in request.form:
-                print('delete database')
                 _dbms.delete_database(edit_database_form.database_name.data)
                 flash(f'Database {edit_database_form.database_name.data} was deleted successfully!', 'success')
 
             if _create_database_button in request.form and create_database_form.validate_on_submit():
-                print('create database')
                 _dbms.create_database(create_database_form.database_name.data)
                 flash(f'Database {create_database_form.database_name.data} was created successfully!', 'success')
 
         edit_database_form.database_name.choices = list(map(lambda x: (x, x), _dbms.get_databases_names()))
     except Exception as e:
-        print('exception: {}'.format(str(e)))
         flash(f'Exception occurred: {str(e)}', 'danger')
 
-    print('get')
     return render_template(_index_template,
                            edit_database_form=edit_database_form,
                            create_database_form=create_database_form)
@@ -75,18 +68,15 @@ def database(database_name: str):
     try:
         if request.method == 'POST':
             if _edit_table_button in request.form:
-                print('edit table')
                 return redirect(url_for('table',
                                         database_name=database_name,
                                         table_name=edit_table_form.table_name.data
                                         ))
             elif _delete_table_button in request.form:
-                print('delete table')
                 _dbms.get_database(database_name).drop_table(edit_table_form.table_name.data)
                 flash(f'Table {create_table_form.table_name.data} successfully deleted', 'success')
 
             if _create_table_button in request.form and create_table_form.validate_on_submit():
-                print('create table')
                 _dbms.get_database(database_name).add_table(Table.from_sql(
                     create_table_form.table_name.data,
                     create_table_form.columns_info.data
@@ -96,14 +86,13 @@ def database(database_name: str):
             if _join_tables_button in request.form \
                     and join_tables_form.column_name.validate(join_tables_form) \
                     and join_tables_form.result_name.validate(join_tables_form):
-                print('join tables')
                 first_table_name = join_tables_form.first_table.data
                 second_table_name = join_tables_form.second_table.data
                 result_table_name = join_tables_form.result_name.data
                 column_name = join_tables_form.column_name.data
                 _dbms.get_database(database_name).add_table(
-                    _dbms.get_database(database_name).tables[first_table_name].join(
-                        _dbms.get_database(database_name).tables[second_table_name],
+                    _dbms.get_database(database_name).get_table(first_table_name).join(
+                        _dbms.get_database(database_name).get_table(second_table_name),
                         column_name,
                         result_table_name
                     )
@@ -115,11 +104,8 @@ def database(database_name: str):
         join_tables_form.first_table.choices = tables
         join_tables_form.second_table.choices = tables
     except Exception as e:
-        print('exception: {}'.format(str(e)))
         flash(f'Exception occurred: {str(e)}', 'danger')
-        traceback.print_exc()
 
-    print('get')
     return render_template(_database_template,
                            edit_table_form=edit_table_form,
                            create_table_form=create_table_form,
@@ -128,9 +114,6 @@ def database(database_name: str):
 
 @app.route('/database/<database_name>/table/<table_name>', methods=['GET', 'POST'])
 def table(database_name: str, table_name: str):
-    print('database name: {}'.format(database_name))
-    print('table name: {}'.format(table_name))
-
     table = _dbms.get_database(database_name).get_table(table_name)
 
     create_row_form = CreateRowForm()
@@ -140,22 +123,16 @@ def table(database_name: str, table_name: str):
     try:
         if request.method == 'POST':
             if _create_row_button in request.form:
-                print('create row')
                 table.append_row_sql(create_row_form.row_data1.data)
 
             if _update_row_button in request.form:
-                print('update row')
                 table.update_row_sql(update_row_form.row_id1.data, update_row_form.row_data2.data)
 
             if _delete_row_button in request.form:
-                print('delete row')
                 table.delete_row(delete_row_form.row_id2.data)
     except Exception as e:
-        print('exception: {}'.format(str(e)))
         flash(f'Exception occurred: {str(e)}', 'danger')
-        traceback.print_exc()
 
-    print('get')
     return render_template(_table_template,
                            create_row_form=create_row_form,
                            update_row_form=update_row_form,
