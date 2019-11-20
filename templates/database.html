@@ -1,41 +1,46 @@
 {% extends "layout.html" %}
 
+{% block js %}
+<script src="{{ url_for('static', filename='js/database.js') }}"></script>
+{% endblock js %}
+
 {% block content %}
 
 <div class="content-section">
-    <form method="POST" action="">
+    <form method="POST" action="" id="edit_delete_table_form">
         {{ edit_table_form.hidden_tag() }}
         <fieldset class="form-group">
             <div class="form-group">
-                {{ edit_table_form.table_name.label(class="form-control-label") }}
-                {{ edit_table_form.table_name(class="form-control form-control-lg") }}
+                {{ edit_table_form.edit_delete_table_name.label(class="form-control-label") }}
+                {{ edit_table_form.edit_delete_table_name(class="form-control form-control-lg") }}
             </div>
         </fieldset>
         <div class="form-group">
             {{ edit_table_form.edit_table(class="btn btn-outline-info") }}
         </div>
         <div class="form-group">
-            {{ edit_table_form.delete_table(class="btn btn-outline-info") }}
+            <input class="btn btn-outline-info" id="delete_table" name="delete_table" type="button"
+                   value="Delete Table">
         </div>
     </form>
 </div>
 
 <div class="content-section">
-    <form method="POST" action="">
+    <form method="POST" action="" id="create_table_form">
         {{ create_table_form.hidden_tag() }}
         <fieldset class="form-group">
             <div class="form-group">
-                {{ create_table_form.table_name.label(class="form-control-label") }}
+                {{ create_table_form.create_table_name.label(class="form-control-label") }}
 
-                {% if create_table_form.table_name.errors %}
-                {{ create_table_form.table_name(class="form-control form-control-lg is-invalid") }}
+                {% if create_table_form.create_table_name.errors %}
+                {{ create_table_form.create_table_name(class="form-control form-control-lg is-invalid") }}
                 <div class="invalid-feedback">
-                    {% for error in create_table_form.table_name.errors %}
+                    {% for error in create_table_form.create_table_name.errors %}
                     <span>{{ error }}</span>
                     {% endfor %}
                 </div>
                 {% else %}
-                {{ create_table_form.table_name(class="form-control form-control-lg") }}
+                {{ create_table_form.create_table_name(class="form-control form-control-lg") }}
                 {% endif %}
             </div>
             <div class="form-group">
@@ -58,8 +63,8 @@
         </div>
     </form>
 </div>
-<div class="content-section">
-    <form method="POST" action="">
+<div class="content-section" id="join_tables_form_div">
+    <form method="POST" action="" id="join_tables_form">
         {{ join_tables_form.hidden_tag() }}
         <fieldset class="form-group">
             <div class="form-group">

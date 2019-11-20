@@ -1,42 +1,46 @@
 {% extends "layout.html" %}
 
+{% block js %}
+<script src="{{ url_for('static', filename='js/index.js') }}"></script>
+{% endblock js %}
+
 {% block content %}
 
 <div class="content-section">
-    <form method="POST" action="">
+    <form method="POST" action="" id="edit_delete_database_form">
         {{ edit_database_form.hidden_tag() }}
         <fieldset class="form-group">
             <div class="form-group">
-                {{ edit_database_form.database_name.label(class="form-control-label") }}
-
-                {{ edit_database_form.database_name(class="form-control form-control-lg") }}
+                {{ edit_database_form.edit_delete_database_name.label(class="form-control-label") }}
+                {{ edit_database_form.edit_delete_database_name(class="form-control form-control-lg") }}
             </div>
         </fieldset>
         <div class="form-group">
             {{ edit_database_form.edit_database(class="btn btn-outline-info") }}
         </div>
         <div class="form-group">
-            {{ edit_database_form.delete_database(class="btn btn-outline-info") }}
+            <input class="btn btn-outline-info" id="delete_database" name="delete_database" type="button"
+                   value="Delete Database">
         </div>
     </form>
 </div>
 
 <div class="content-section">
-    <form method="POST" action="">
+    <form method="POST" action="" id="create_database_form">
         {{ create_database_form.hidden_tag() }}
         <fieldset class="form-group">
             <div class="form-group">
-                {{ create_database_form.database_name.label(class="form-control-label") }}
+                {{ create_database_form.create_database_name.label(class="form-control-label") }}
 
-                {% if create_database_form.database_name.errors %}
-                {{ create_database_form.database_name(class="form-control form-control-lg is-invalid") }}
+                {% if create_database_form.create_database_name.errors %}
+                {{ create_database_form.create_database_name(class="form-control form-control-lg is-invalid") }}
                 <div class="invalid-feedback">
-                    {% for error in create_database_form.database_name.errors %}
+                    {% for error in create_database_form.create_database_name.errors %}
                     <span>{{ error }}</span>
                     {% endfor %}
                 </div>
                 {% else %}
-                {{ create_database_form.database_name(class="form-control form-control-lg") }}
+                {{ create_database_form.create_database_name(class="form-control form-control-lg") }}
                 {% endif %}
             </div>
         </fieldset>

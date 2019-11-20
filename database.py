@@ -186,7 +186,7 @@ class ColumnTypes:
 
         return result
 
-    def verify(self, row: RowData) -> RowData:
+    def verify(self, row: RowData):
         if not len(row) == len(self.types_list):
             raise ValueError('Length of row {} does not match number of columns in the table'.format(row))
 
@@ -260,7 +260,7 @@ class Table:
         return json.dumps(self.to_json(), indent=4)
 
     def append_row_sql(self, sql: str):
-        self.append_row_str(sql.split(','))
+        return self.append_row_str(sql.split(','))
 
     def update_row_sql(self, id: int, sql: str):
         columns_names, column_values = Table._parse_row_sql(sql)
@@ -284,7 +284,9 @@ class Table:
         ids = [row.id for row in self.rows]
         if id not in ids:
             raise ValueError(f'No row with id {id} in table {self.name}')
+        result = self.rows[ids.index(id)]
         del self.rows[ids.index(id)]
+        return result
 
     def get_row(self, id: int):
         ids = [row.id for row in self.rows]
@@ -310,13 +312,14 @@ class Table:
 
     def append_row_str(self, row_str: RowDataStr):
         converted = self.columns_types.convert(row_str)
-        self.append_row(converted)
+        return self.append_row(converted)
 
     def append_row(self, row: RowData):
         self.columns_types.verify(row)
         table_row = TableRow(self.id_counter, row)
         self._append_row_obj(table_row)
         self.id_counter += 1
+        return table_row
 
     def _append_row_obj(self, table_row: TableRow):
         self.rows.append(table_row)
