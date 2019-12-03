@@ -1,4 +1,6 @@
 $(document).ready(function () {
+    const restUrl = "http://127.0.0.1:6000";
+
 
     function getRowId(rowId) {
         return 'row-' + rowId;
@@ -20,7 +22,7 @@ $(document).ready(function () {
     }
 
     $.ajax({
-        url: '/rest' + window.location.pathname,
+        url: restUrl + '/rest' + window.location.pathname,
         type: 'GET',
         success: function (response) {
             console.log(response);
@@ -55,7 +57,7 @@ $(document).ready(function () {
         const row_data = $('#create_row_data').val();
 
         $.ajax({
-            url: '/rest' + window.location.pathname + '/row?row_data\=' + row_data,
+            url: restUrl + '/rest' + window.location.pathname + '/row?row_data\=' + row_data,
             type: 'POST',
             success: function (response) {
                 console.log(response);
@@ -73,7 +75,7 @@ $(document).ready(function () {
         const row_id = $('#delete_row_id').val();
 
         $.ajax({
-            url: '/rest' + window.location.pathname + '/row?row_id\=' + row_id,
+            url: restUrl + '/rest' + window.location.pathname + '/row?row_id\=' + row_id,
             type: 'DELETE',
             success: function (response) {
                 console.log(response);

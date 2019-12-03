@@ -1,9 +1,10 @@
 $(document).ready(function () {
+    const restUrl = "http://127.0.0.1:6000";
 
     $('#save_button').click(function () {
 
         $.ajax({
-            url: '/rest/save',
+            url: restUrl + '/rest/save',
             type: 'POST',
             success: function (response) {
                 console.log(response);

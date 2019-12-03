@@ -1,8 +1,9 @@
 $(document).ready(function () {
+    const restUrl = "http://127.0.0.1:6000";
 
     // load databases names
     $.ajax({
-        url: '/rest/database',
+        url: restUrl + '/rest/database',
         type: 'GET',
         success: function (response) {
             $.each(response, function (index, name) {
@@ -22,7 +23,7 @@ $(document).ready(function () {
         const database_url = '/rest/database/' + database_name;
 
         $.ajax({
-            url: database_url,
+            url: restUrl + database_url,
             type: 'DELETE',
             success: function (response) {
                 console.log(response);
@@ -42,7 +43,7 @@ $(document).ready(function () {
         const database_url = '/rest/database/' + name;
 
         $.ajax({
-            url: database_url,
+            url: restUrl + database_url,
             type: 'POST',
             success: function (response) {
                 console.log(response);

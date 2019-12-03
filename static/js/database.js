@@ -1,8 +1,9 @@
 $(document).ready(function () {
+    const restUrl = "http://127.0.0.1:6000";
 
     // load table names
     $.ajax({
-        url: '/rest' + window.location.pathname + '/table',
+        url: restUrl + '/rest' + window.location.pathname + '/table',
         type: 'GET',
         success: function (response) {
             $.each(response, function (index, name) {
@@ -19,7 +20,7 @@ $(document).ready(function () {
         const table_name = $('#edit_delete_table_name').val();
 
         $.ajax({
-            url: '/rest' + window.location.pathname + '/table/' + table_name,
+            url: restUrl + '/rest' + window.location.pathname + '/table/' + table_name,
             type: 'DELETE',
             success: function (response) {
                 console.log(response);
@@ -40,7 +41,7 @@ $(document).ready(function () {
 
 
         $.post(
-            "/rest" + window.location.pathname + "/table/" + name + "?sql\=" + sql,
+            restUrl + "/rest" + window.location.pathname + "/table/" + name + "?sql\=" + sql,
         ).done(function (response) {
                 console.log(response);
                 $('#success_alert').text(response.message).show();
